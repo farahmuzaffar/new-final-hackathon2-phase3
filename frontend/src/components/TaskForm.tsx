@@ -1,74 +1,58 @@
-// frontend/src/components/TaskForm.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { taskApi } from '../lib/api';
+import { useState } from 'react';
+import { taskApi } from '@/lib/api';
 
-interface TaskFormProps {
-  onTaskCreated: () => void;
-}
-
-const TaskForm: React.FC<TaskFormProps> = ({ onTaskCreated }) => {
+export default function TaskForm() {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
+    if (!title.trim()) return;
 
     setLoading(true);
-    setError(null);
+    setError('');
 
     try {
-      await taskApi.createTask({ title, description });
+      await taskApi.createTask({
+        title,
+      });
+
       setTitle('');
-      setDescription('');
-      onTaskCreated(); // Notify parent component to refresh tasks
+      window.location.reload(); // simple refresh
     } catch (err) {
-      setError('Failed to create task. Please try again.');
-      console.error('Error creating task:', err);
+      setError('Failed to add task');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="task-form">
-      <div className="form-group">
-        <label htmlFor="title">Title *</label>
-        <input
-          type="text"
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Task title"
-          required
-        />
-      </div>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-xl shadow p-4 space-y-3"
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Add a new task..."
+        className="w-full px-4 py-3 rounded-lg border border-slate-300 
+        focus:ring-2 focus:ring-indigo-500 outline-none"
+      />
 
-      <div className="form-group">
-        <label htmlFor="description">Description</label>
-        <textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Task description (optional)"
-        />
-      </div>
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {error && <div className="error-message">{error}</div>}
-
-      <button type="submit" disabled={loading}>
-        {loading ? 'Creating...' : 'Create Task'}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-2 rounded-lg bg-indigo-600 text-white 
+        hover:bg-indigo-700 transition"
+      >
+        {loading ? 'Adding...' : 'Add Task'}
       </button>
     </form>
   );
-};
-
-export default TaskForm;
+}

@@ -1,9 +1,11 @@
-// frontend/src/lib/api.ts
+'use client';
+
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-// Create an Axios instance
+// ================= AXIOS INSTANCE =================
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -11,90 +13,65 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add JWT token to requests
+// ================= REQUEST INTERCEPTOR =================
+// Har request ke sath token attach karega
 apiClient.interceptors.request.use(
-  async (config) => {
-    // In a real implementation, we would get the token from the auth system
-    // For now, we'll assume it's available in localStorage via Better Auth
-    const token = localStorage.getItem('better-auth.session_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        config.headers = config.headers ?? {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle errors
+// ================= RESPONSE INTERCEPTOR =================
+// ❌ AUTO REDIRECT REMOVE (yehi tumhara bug tha)
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access - maybe redirect to login
-      localStorage.removeItem('better-auth.session_token');
-      window.location.href = '/login';
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      // ❌ window.location.href = '/login';  <-- YE HATA DIYA
     }
     return Promise.reject(error);
   }
 );
 
-// Task API functions
+// ================= TASK API =================
 export const taskApi = {
-  // Get all tasks for the authenticated user
   getTasks: async () => {
-    try {
-      const response = await apiClient.get('/tasks');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      throw error;
-    }
+    const res = await apiClient.get('/api/tasks/');
+    return res.data;
   },
 
-  // Create a new task
-  createTask: async (taskData: { title: string; description?: string; completed?: boolean }) => {
-    try {
-      const response = await apiClient.post('/tasks', taskData);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating task:', error);
-      throw error;
-    }
+  createTask: async (taskData: {
+    title: string;
+    description?: string;
+  }) => {
+    const res = await apiClient.post('/api/tasks/', taskData);
+    return res.data;
   },
 
-  // Update a task
-  updateTask: async (taskId: string, taskData: { title?: string; description?: string; completed?: boolean }) => {
-    try {
-      const response = await apiClient.put(`/tasks/${taskId}`, taskData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating task:', error);
-      throw error;
+  updateTask: async (
+    taskId: string,
+    taskData: {
+      title?: string;
+      description?: string;
+      completed?: boolean;
     }
+  ) => {
+    const res = await apiClient.put(`/api/tasks/${taskId}`, taskData);
+    return res.data;
   },
 
-  // Toggle task completion
-  toggleTask: async (taskId: string) => {
-    try {
-      const response = await apiClient.patch(`/tasks/${taskId}/toggle`);
-      return response.data;
-    } catch (error) {
-      console.error('Error toggling task:', error);
-      throw error;
-    }
-  },
-
-  // Delete a task
   deleteTask: async (taskId: string) => {
-    try {
-      const response = await apiClient.delete(`/tasks/${taskId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error deleting task:', error);
-      throw error;
-    }
+    const res = await apiClient.delete(`/api/tasks/${taskId}`);
+    return res.data;
   },
 };
 

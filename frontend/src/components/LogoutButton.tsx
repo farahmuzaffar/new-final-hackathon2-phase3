@@ -2,24 +2,13 @@
 'use client';
 
 import React from 'react';
-import { signOut } from '../lib/auth';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '../contexts/AuthContext';
 
 const LogoutButton: React.FC = () => {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      // Redirect to login page after logout
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  const { logout } = useAuth();
 
   return (
-    <button onClick={handleLogout} className="logout-button">
+    <button onClick={logout} className="logout-button">
       Logout
     </button>
   );

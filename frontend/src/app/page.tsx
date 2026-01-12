@@ -1,40 +1,28 @@
-// frontend/src/app/page.tsx
 'use client';
 
-import React, { useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import ProtectedRoute from '../components/ProtectedRoute';
-import TaskForm from '../components/TaskForm';
-import TaskList, { TaskListHandle } from '../components/TaskList';
-import UserProfile from '../components/UserProfile';
+import LogoutButton from '@/components/LogoutButton';
+import TaskForm from '@/components/TaskForm';
+import TaskList from '@/components/TaskList';
 
-const HomePage: React.FC = () => {
-  const { user, loading } = useAuth();
-  const taskListRef = useRef<TaskListHandle>(null);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
+export default function Dashboard() {
   return (
-    <ProtectedRoute>
-      <div className="home-page">
-        <h1>Todo Dashboard</h1>
+    <div className="min-h-screen bg-slate-100 p-6">
+      <div className="max-w-4xl mx-auto space-y-6">
 
-        <UserProfile />
-
-        <div className="content-section">
-          <div className="task-section">
-            <TaskForm onTaskCreated={() => {
-              // Refresh the task list after creating a new task
-              taskListRef.current?.refreshTasks();
-            }} />
-            <TaskList ref={taskListRef} />
-          </div>
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-slate-800">
+            My Tasks
+          </h1>
+          <LogoutButton />
         </div>
-      </div>
-    </ProtectedRoute>
-  );
-};
 
-export default HomePage;
+        {/* Add / Update Task */}
+        <TaskForm />
+
+        {/* Task List */}
+        <TaskList />
+      </div>
+    </div>
+  );
+}

@@ -1,61 +1,44 @@
-// frontend/src/contexts/AuthContext.tsx
 'use client';
 
-import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
-import { useSession, signOut } from '../lib/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-interface AuthContextType {
+type AuthContextType = {
   user: any;
   loading: boolean;
-  login: () => void;
   logout: () => void;
-}
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  logout: () => {},
+});
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { data: session, isLoading } = useSession();
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading) {
-      setUser(session?.user || null);
-      setLoading(false);
-    }
-  }, [session, isLoading]);
-
-  const login = async () => {
-    // Login is handled by Better Auth
-  };
-
-  const logout = async () => {
-    try {
-      await signOut();
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      // basic presence check (Phase-2 level)
+      setUser({ authenticated: true });
+    } else {
       setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
     }
+    setLoading(false);
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem('access_token');
+    window.location.href = '/login';
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    logout
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

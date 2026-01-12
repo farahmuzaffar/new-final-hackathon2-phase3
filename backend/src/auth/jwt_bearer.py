@@ -1,34 +1,35 @@
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .auth import verify_token
-from typing import Optional
+from jose import jwt, JWTError
 
+from src.config import settings
 
 class JWTBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
-        super(JWTBearer, self).__init__(auto_error=auto_error)
+        super().__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request):
-        credentials: Optional[HTTPAuthorizationCredentials] = await super(JWTBearer, self).__call__(request)
-        
-        if credentials:
-            if not credentials.scheme == "Bearer":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Invalid authentication scheme."
-                )
-            token = credentials.credentials
-            user_id = verify_token(token)
-            if not user_id:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid or expired token."
-                )
-            # Add user_id to request state for use in route handlers
-            request.state.user_id = user_id
-            return credentials.credentials
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Authentication credentials were not provided."
+        credentials: HTTPAuthorizationCredentials = await super().__call__(request)
+
+        if credentials is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        if credentials.scheme != "Bearer":
+            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+
+        token = credentials.credentials
+
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM],
             )
+            user_id = payload.get("sub")
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Invalid token")
+
+            return user_id   # 👈 ONLY RETURN USER ID
+
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token")

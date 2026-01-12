@@ -33,7 +33,7 @@ const TaskList = forwardRef<TaskListHandle>((_, ref) => {
     try {
       setLoading(true);
       const response = await taskApi.getTasks();
-      setTasks(response.data.tasks || []);
+      setTasks(response || []);
     } catch (err) {
       setError('Failed to load tasks. Please try again.');
       console.error('Error fetching tasks:', err);
