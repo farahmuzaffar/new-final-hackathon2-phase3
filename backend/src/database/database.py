@@ -5,6 +5,8 @@ from src.config import settings
 engine = create_engine(
     settings.DATABASE_URL,
     echo=True,
+    pool_pre_ping=True,   # ⭐ Neon fix
+    pool_recycle=300,     # ⭐ 5 min recycle
 )
 
 

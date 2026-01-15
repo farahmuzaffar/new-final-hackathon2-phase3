@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from src.database.database import engine
-from src.api import auth, tasks
+from src.api import auth, tasks, chat
+from src.models import *
 
 app = FastAPI()
 
@@ -23,3 +24,4 @@ def on_startup():
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
+app.include_router(chat.router)
